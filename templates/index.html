@@ -1,0 +1,451 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Scanner Dashboard</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+
+    <header>
+        <h1>Network Scanner</h1>
+        <p>Network Device Discovery Dashboard</p>
+    </header>
+
+    <section class="welcome">
+        <h2>Welcome to Network Scanner</h2>
+        <p>Monitor and discover devices connected to your local network.</p>
+
+        <form action="/scan" method="POST">
+            <button type="submit">Start Network Scan</button>
+        </form>
+
+        {% if scanned %}
+        <form action="/export" method="GET" style="margin-top: 15px;">
+            <button type="submit" style="background: #16a34a;">
+                Export Devices to CSV
+            </button>
+        </form>
+        {% endif %}
+    </section>
+
+    {% if scanned %}
+
+    <section class="results">
+
+        <h2>Network Information</h2>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 25px;">
+
+            <div style="flex: 1; min-width: 180px; background: #0f172a; padding: 25px; border-radius: 10px; border-left: 4px solid #38bdf8;">
+                <h3 style="color: #94a3b8; margin-bottom: 15px;">Local IP Address</h3>
+                <p style="color: #38bdf8; font-size: 20px; font-weight: bold;">{{ local_ip }}</p>
+            </div>
+
+            <div style="flex: 1; min-width: 180px; background: #0f172a; padding: 25px; border-radius: 10px; border-left: 4px solid #38bdf8;">
+                <h3 style="color: #94a3b8; margin-bottom: 15px;">Network Interface</h3>
+                <p style="color: #38bdf8; font-size: 20px; font-weight: bold;">{{ interface }}</p>
+            </div>
+
+            <div style="flex: 1; min-width: 180px; background: #0f172a; padding: 25px; border-radius: 10px; border-left: 4px solid #38bdf8;">
+                <h3 style="color: #94a3b8; margin-bottom: 15px;">Gateway</h3>
+                <p style="color: #38bdf8; font-size: 20px; font-weight: bold;">{{ gateway }}</p>
+            </div>
+
+            <div style="flex: 1; min-width: 180px; background: #0f172a; padding: 25px; border-radius: 10px; border-left: 4px solid #38bdf8;">
+                <h3 style="color: #94a3b8; margin-bottom: 15px;">Network Range</h3>
+                <p style="color: #38bdf8; font-size: 20px; font-weight: bold;">{{ network_range }}</p>
+            </div>
+
+            <div style="flex: 1; min-width: 180px; background: #0f172a; padding: 25px; border-radius: 10px; border-left: 4px solid #38bdf8;">
+                <h3 style="color: #94a3b8; margin-bottom: 15px;">Discovered Entries</h3>
+                <p style="color: #38bdf8; font-size: 20px; font-weight: bold;">{{ total_devices }}</p>
+            </div>
+
+        </div>
+
+        <div style="margin-top: 25px; padding: 15px; background: #0f172a; border-radius: 8px; color: #94a3b8;">
+            <strong style="color: #38bdf8;">Last Scan Time:</strong>
+            {{ scan_time }}
+        </div>
+
+    </section>
+
+
+    <!-- DEVICE STATISTICS -->
+
+    <section class="results">
+
+        <h2>Device Statistics</h2>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 25px;">
+
+            <div style="flex: 1; min-width: 180px; background: #0f172a; padding: 25px; border-radius: 10px; border-left: 4px solid #22c55e;">
+                <h3 style="color: #94a3b8;">Reachable Devices</h3>
+                <p style="color: #22c55e; font-size: 30px; font-weight: bold;">
+                    {{ reachable_count }}
+                </p>
+            </div>
+
+            <div style="flex: 1; min-width: 180px; background: #0f172a; padding: 25px; border-radius: 10px; border-left: 4px solid #f59e0b;">
+                <h3 style="color: #94a3b8;">Cached Devices</h3>
+                <p style="color: #f59e0b; font-size: 30px; font-weight: bold;">
+                    {{ cached_count }}
+                </p>
+            </div>
+
+            <div style="flex: 1; min-width: 180px; background: #0f172a; padding: 25px; border-radius: 10px; border-left: 4px solid #ef4444;">
+                <h3 style="color: #94a3b8;">Other Statuses</h3>
+                <p style="color: #ef4444; font-size: 30px; font-weight: bold;">
+                    {{ other_count }}
+                </p>
+            </div>
+
+        </div>
+
+        <div style="max-width: 600px; margin: 35px auto;">
+            <h3 style="text-align: center; margin-bottom: 20px;">
+                Device Status Distribution
+            </h3>
+
+            <canvas id="deviceChart"></canvas>
+        </div>
+
+    </section>
+
+
+    <!-- DISCOVERED DEVICES -->
+
+    <section class="results">
+
+        <h2>Discovered Devices</h2>
+
+        <p class="count">
+            Total discovered entries: {{ devices|length }}
+        </p>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0;">
+
+            <input
+                type="text"
+                id="deviceSearch"
+                placeholder="Search IP, MAC address or hostname..."
+                onkeyup="filterDevices()"
+                style="flex: 2; min-width: 220px; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white;"
+            >
+
+            <select
+                id="statusFilter"
+                onchange="filterDevices()"
+                style="flex: 1; min-width: 150px; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white;"
+            >
+                <option value="">All Statuses</option>
+                <option value="reachable">Reachable</option>
+                <option value="cached - not confirmed online">Cached - not confirmed online</option>
+                <option value="checking">Checking</option>
+                <option value="unreachable">Unreachable</option>
+            </select>
+
+            <button type="button" onclick="clearFilters()" style="background: #475569;">
+                Clear Search
+            </button>
+
+        </div>
+
+        <p id="filterCount" style="color: #38bdf8; margin-bottom: 15px;">
+            Showing all discovered entries.
+        </p>
+
+        {% if devices %}
+
+        <div class="table-container">
+
+            <table id="deviceTable">
+
+                <thead>
+                    <tr>
+                        <th>IP Address</th>
+                        <th>MAC Address</th>
+                        <th>Hostname</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for device in devices %}
+
+                    <tr class="device-row">
+                        <td>{{ device.ip }}</td>
+                        <td>{{ device.mac }}</td>
+                        <td>{{ device.hostname }}</td>
+                        <td class="status">{{ device.status }}</td>
+                        <td>
+                            <button
+                                type="button"
+                                class="details-button"
+                                data-ip="{{ device.ip|e }}"
+                                data-mac="{{ device.mac|e }}"
+                                data-hostname="{{ device.hostname|e }}"
+                                data-status="{{ device.status|e }}"
+                                data-interface="{{ interface|e }}"
+                                onclick="showDeviceDetails(this)">
+                                View Details
+                            </button>
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <p id="noResults" style="display: none; margin-top: 20px;">
+            No matching devices found.
+        </p>
+
+        {% else %}
+        <p>No network devices were discovered.</p>
+        {% endif %}
+
+    </section>
+
+
+    <!-- DEVICE DETAILS MODAL -->
+
+    <div id="deviceDetailsModal"
+         class="device-modal"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="deviceDetailsTitle"
+         onclick="closeModalOnBackdrop(event)"
+         style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.75); padding: 20px; align-items: center; justify-content: center;">
+
+        <div style="width: 100%; max-width: 480px; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 12px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.4);">
+
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 20px;">
+                <h2 id="deviceDetailsTitle" style="margin: 0; color: #38bdf8;">Device Details</h2>
+                <button type="button" onclick="closeDeviceDetails()" aria-label="Close device details" style="background: #475569; padding: 8px 12px;">Close</button>
+            </div>
+
+            <p><strong>IP Address:</strong> <span id="detailIp">-</span></p>
+            <p><strong>MAC Address:</strong> <span id="detailMac">-</span></p>
+            <p><strong>Hostname:</strong> <span id="detailHostname">-</span></p>
+            <p><strong>Status:</strong> <span id="detailStatus">-</span></p>
+            <p><strong>Network Interface:</strong> <span id="detailInterface">-</span></p>
+
+            <p style="color: #94a3b8; font-size: 13px; margin-top: 20px;">
+                Note: A cached entry does not confirm that the device is currently online.
+            </p>
+        </div>
+    </div>
+
+    {% else %}
+
+    <section class="results">
+        <h2>Network Information</h2>
+        <p>Start a scan to view your network information.</p>
+    </section>
+
+    <section class="results">
+        <h2>Discovered Devices</h2>
+        <p>Your discovered devices will appear here.</p>
+    </section>
+
+    {% endif %}
+
+
+    <footer>
+        <p>Network Scanner Project | Built with Python and Flask</p>
+    </footer>
+
+</div>
+
+
+<script>
+
+function filterDevices() {
+
+    const searchInput = document.getElementById("deviceSearch");
+    const statusInput = document.getElementById("statusFilter");
+
+    if (!searchInput || !statusInput) {
+        return;
+    }
+
+    const searchValue = searchInput.value.toLowerCase();
+    const statusValue = statusInput.value.toLowerCase();
+
+    const rows = document.querySelectorAll(".device-row");
+
+    let visibleCount = 0;
+
+    rows.forEach(function(row) {
+
+        const rowText = row.innerText.toLowerCase();
+        const statusCell = row.cells[3].innerText.toLowerCase();
+
+        const matchesSearch = rowText.includes(searchValue);
+
+        const matchesStatus =
+            statusValue === "" || statusCell === statusValue;
+
+        if (matchesSearch && matchesStatus) {
+            row.style.display = "";
+            visibleCount++;
+        } else {
+            row.style.display = "none";
+        }
+
+    });
+
+    document.getElementById("filterCount").innerText =
+        "Showing " + visibleCount + " of " + rows.length + " entries.";
+
+    const noResults = document.getElementById("noResults");
+
+    if (noResults) {
+        noResults.style.display =
+            visibleCount === 0 ? "block" : "none";
+    }
+
+}
+
+
+function clearFilters() {
+
+    document.getElementById("deviceSearch").value = "";
+    document.getElementById("statusFilter").value = "";
+
+    filterDevices();
+
+}
+
+
+function showDeviceDetails(button) {
+
+    document.getElementById("detailIp").textContent = button.dataset.ip;
+    document.getElementById("detailMac").textContent = button.dataset.mac;
+    document.getElementById("detailHostname").textContent = button.dataset.hostname;
+    document.getElementById("detailStatus").textContent = button.dataset.status;
+    document.getElementById("detailInterface").textContent = button.dataset.interface;
+
+    const modal = document.getElementById("deviceDetailsModal");
+    modal.style.display = "flex";
+
+}
+
+
+function closeDeviceDetails() {
+
+    document.getElementById("deviceDetailsModal").style.display = "none";
+
+}
+
+
+function closeModalOnBackdrop(event) {
+
+    if (event.target.id === "deviceDetailsModal") {
+        closeDeviceDetails();
+    }
+
+}
+
+
+document.addEventListener("keydown", function(event) {
+
+    if (event.key === "Escape") {
+
+        const modal = document.getElementById("deviceDetailsModal");
+
+        if (modal && modal.style.display === "flex") {
+            closeDeviceDetails();
+        }
+
+    }
+
+});
+
+
+{% if scanned %}
+
+const chartCanvas = document.getElementById("deviceChart");
+
+if (chartCanvas) {
+
+    new Chart(chartCanvas, {
+
+        type: "doughnut",
+
+        data: {
+
+            labels: [
+                "Reachable",
+                "Cached",
+                "Other"
+            ],
+
+            datasets: [{
+
+                data: [
+                    {{ reachable_count }},
+                    {{ cached_count }},
+                    {{ other_count }}
+                ],
+
+                backgroundColor: [
+                    "#22c55e",
+                    "#f59e0b",
+                    "#ef4444"
+                ],
+
+                borderWidth: 0
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            plugins: {
+
+                legend: {
+
+                    position: "bottom",
+
+                    labels: {
+                        color: "#cbd5e1"
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+
+}
+
+{% endif %}
+
+</script>
+
+</body>
+</html>

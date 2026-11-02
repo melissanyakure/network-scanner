@@ -1,0 +1,206 @@
+
+/* =========================
+   GENERAL PAGE STYLING
+========================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+    min-height: 100vh;
+}
+
+.container {
+    width: 90%;
+    max-width: 1100px;
+    margin: 40px auto;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+header {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+header h1 {
+    color: #38bdf8;
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+header p {
+    color: #cbd5e1;
+}
+
+/* =========================
+   WELCOME SECTION
+========================= */
+
+.welcome,
+.results {
+    background: #1e293b;
+    padding: 30px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+
+.welcome {
+    text-align: center;
+}
+
+.welcome h2,
+.results h2 {
+    margin-bottom: 15px;
+}
+
+.welcome p {
+    color: #cbd5e1;
+    margin-bottom: 25px;
+}
+
+/* =========================
+   SCAN BUTTON
+========================= */
+
+button {
+    background: #0284c7;
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #0369a1;
+}
+
+/* =========================
+   NETWORK INFORMATION CARDS
+========================= */
+
+.network-cards {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 20px;
+    margin-top: 25px;
+    width: 100%;
+}
+
+.network-card {
+    flex: 1;
+    background: #0f172a;
+    padding: 25px;
+    border-radius: 10px;
+    border-left: 4px solid #38bdf8;
+    min-width: 0;
+}
+
+.network-card h3 {
+    color: #94a3b8;
+    font-size: 15px;
+    margin-bottom: 15px;
+}
+
+.network-card p {
+    color: #38bdf8;
+    font-size: 22px;
+    font-weight: bold;
+    overflow-wrap: anywhere;
+}
+
+/* =========================
+   DISCOVERED DEVICES
+========================= */
+
+.count {
+    margin: 15px 0;
+    color: #38bdf8;
+}
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th,
+td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #334155;
+}
+
+th {
+    background: #334155;
+    color: #38bdf8;
+}
+
+td {
+    color: #cbd5e1;
+}
+
+/* =========================
+   DEVICE STATUS
+========================= */
+
+.status {
+    color: #4ade80;
+    font-weight: bold;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+footer {
+    text-align: center;
+    color: #94a3b8;
+    padding: 20px;
+}
+
+/* =========================
+   RESPONSIVE DESIGN
+========================= */
+
+@media (max-width: 700px) {
+
+    .network-cards {
+        flex-direction: column !important;
+    }
+
+    .network-card {
+        width: 100%;
+    }
+
+    .container {
+        width: 95%;
+    }
+
+    .welcome,
+    .results {
+        padding: 20px;
+    }
+
+    header h1 {
+        font-size: 28px;
+    }
+}
